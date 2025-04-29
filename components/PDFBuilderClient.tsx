@@ -77,6 +77,8 @@ export default function PDFBuilderClient() {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
   const [isDraggingCanvasItem, setIsDraggingCanvasItem] = useState(false)
   const [activeTab, setActiveTab] = useState("editor");
+  const [saveStatus, setSaveStatus] = useState('idle');
+  const [templateName, setTemplateName] = useState("");
 
   // Get the selected item from canvasItems
   const selectedItem = selectedItemId ? canvasItems.find(item => item.id === selectedItemId) : null;
@@ -628,6 +630,7 @@ export default function PDFBuilderClient() {
 
   // Save handler
   const handleSaveTemplate = async () => {
+    setSaveStatus('saving');
     try {
       // 1. Get the canvas DOM node
       const canvasNode = document.getElementById("pdf-canvas");
@@ -637,7 +640,7 @@ export default function PDFBuilderClient() {
         previewUrl = canvas.toDataURL("image/png");
       }
       // 2. Prepare template data
-      const name = prompt("Enter a name for your template:", "Untitled Template") || "Untitled Template";
+      const name = templateName.trim() || "Untitled Template";
       const data = { canvasItems };
       // 3. POST to API
       const res = await fetch("/api/templates", {
@@ -646,12 +649,15 @@ export default function PDFBuilderClient() {
         body: JSON.stringify({ name, data, previewUrl }),
       });
       if (res.ok) {
-        alert("Template saved successfully!");
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 2000);
       } else {
-        alert("Failed to save template.");
+        setSaveStatus('error');
+        setTimeout(() => setSaveStatus('idle'), 2000);
       }
-    } catch (err) {
-      alert("Error saving template: " + (err as Error).message);
+    } catch (error) {
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 2000);
     }
   };
 
@@ -662,15 +668,30 @@ export default function PDFBuilderClient() {
         <div className="flex items-center gap-2">
           <h1 className="text-xl font-semibold">PDF Builder</h1>
           <span className="text-xs bg-muted px-2 py-0.5 rounded-full">Draft</span>
+          {/* Template name input */}
+          <Input
+            className="ml-4 w-56 h-8 text-base font-medium bg-transparent border-none focus:ring-0 focus:outline-none"
+            value={templateName}
+            onChange={e => setTemplateName(e.target.value)}
+            placeholder="Template Name"
+            aria-label="Template Name"
+            spellCheck={false}
+            maxLength={64}
+          />
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm">
             <Settings className="h-4 w-4 mr-2" />
             Settings
           </Button>
-          <Button variant="outline" size="sm" onClick={handleSaveTemplate}>
+          <Button
+            variant={saveStatus === 'saved' ? 'default' : saveStatus === 'error' ? 'destructive' : 'outline'}
+            size="sm"
+            onClick={handleSaveTemplate}
+            disabled={saveStatus === 'saving'}
+          >
             <Save className="h-4 w-4 mr-2" />
-            Save
+            {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved!' : saveStatus === 'error' ? 'Error' : 'Save'}
           </Button>
           <Button variant="outline" size="sm">
             <Download className="h-4 w-4 mr-2" />
