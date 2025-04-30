@@ -2,6 +2,7 @@
 import mongoose, { Schema, models, model } from 'mongoose';
 
 const TemplateSchema = new Schema({
+  id: { type: String, required: true, unique: true },
   name: { type: String, required: true },
   data: { type: Schema.Types.Mixed, required: true }, // Store editor/canvas data
   previewUrl: { type: String }, // URL or base64 of preview image

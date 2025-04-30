@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react";
-import { LayoutTemplate, Search, Filter, Star, Clock, Tag, Eye, Download, Plus, ChevronDown } from 'lucide-react';
+import { LayoutTemplate, Search, Filter, Star, Clock, Tag, Eye, Download, Plus, ChevronDown, Trash2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -32,6 +32,8 @@ export default function TemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [templateToDelete, setTemplateToDelete] = useState<Template | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Fetch templates from API
   const fetchTemplates = useCallback(async () => {
@@ -88,6 +90,30 @@ export default function TemplatesPage() {
 
     return matchesSearch && matchesCategory && matchesTab;
   });
+
+  // Delete handler
+  const handleDeleteTemplate = async (template: Template) => {
+    setTemplateToDelete(template);
+  };
+
+  const confirmDeleteTemplate = async () => {
+    if (!templateToDelete) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/templates?id=${templateToDelete.id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        setTemplateToDelete(null);
+        await refreshTemplates();
+      } else {
+        alert(data.error || 'Failed to delete template');
+      }
+    } catch (err) {
+      alert('Failed to delete template');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <div className="w-full px-8 py-8">
@@ -163,7 +189,12 @@ export default function TemplatesPage() {
       ) : filteredTemplates.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {filteredTemplates.map((template) => (
-            <TemplateCard key={template.id} template={template} onPreview={() => setSelectedTemplate(template)} />
+            <TemplateCard
+              key={template.id}
+              template={template}
+              onPreview={() => setSelectedTemplate(template)}
+              onDelete={() => handleDeleteTemplate(template)}
+            />
           ))}
         </div>
       ) : (
@@ -225,20 +256,39 @@ export default function TemplatesPage() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!templateToDelete} onOpenChange={(open) => !open && setTemplateToDelete(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Template</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p>Are you sure you want to delete the template <span className="font-semibold">{templateToDelete?.title}</span>? This action cannot be undone.</p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setTemplateToDelete(null)} disabled={deleting}>Cancel</Button>
+              <Button variant="destructive" onClick={confirmDeleteTemplate} disabled={deleting}>{deleting ? 'Deleting...' : 'Delete'}</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-function TemplateCard({ template, onPreview }: { template: Template; onPreview: () => void }) {
+function TemplateCard({ template, onPreview, onDelete }: { template: Template; onPreview: () => void; onDelete: () => void }) {
   return (
-    <div className="border rounded-md overflow-hidden hover:border-primary transition-colors group">
+    <div className="border rounded-md overflow-hidden hover:border-primary transition-colors group relative">
       <div className="relative">
+        <span className="absolute top-2 right-2 z-20 text-[10px] text-muted-foreground bg-white/80 px-2 py-0.5 rounded shadow-sm font-mono">
+          [ {template.id} ]
+        </span>
         <img
           src={template.thumbnailUrl || "/placeholder.svg"}
           alt={template.title}
           className="w-full aspect-[1/1.414] object-cover"
         />
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 z-10">
           <Button size="sm" variant="secondary" onClick={onPreview}>
             <Eye className="h-4 w-4 mr-1" />
             Preview
@@ -247,9 +297,13 @@ function TemplateCard({ template, onPreview }: { template: Template; onPreview: 
             <Download className="h-4 w-4 mr-1" />
             Use
           </Button>
+          <Button size="sm" variant="destructive" onClick={onDelete}>
+            <Trash2 className="h-4 w-4 mr-1" />
+            Delete
+          </Button>
         </div>
         {template.featured && (
-          <div className="absolute top-2 right-2">
+          <div className="absolute top-2 left-2">
             <Badge className="bg-yellow-500 hover:bg-yellow-600">
               <Star className="h-3 w-3 mr-1 fill-current" />
               Featured

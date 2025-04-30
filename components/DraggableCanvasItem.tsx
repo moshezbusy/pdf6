@@ -1,7 +1,7 @@
 import React from 'react';
 import { useDrag } from 'react-dnd';
 import { GripHorizontal, Tag } from 'lucide-react';
-import type { CanvasItem, GridCell } from '../../types/CanvasItem';
+import type { CanvasItem, GridCell } from '../types/CanvasItem';
 import {
   MousePointerClick,
   Square,
@@ -589,12 +589,12 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
           }}
         >
           <tbody style={item.height ? { height: '100%' } : {}}>
-            {item.tableData && item.tableData.map((row, rowIdx) => (
+            {item.tableData && item.tableData.map((row: string[], rowIdx: number) => (
               <tr
                 key={rowIdx}
                 style={{ height: (hasHeader && rowIdx === 0 ? (item.rowHeaderHeight ?? 40) : (item.rowHeight ?? 40)) }}
               >
-                {row.map((cell, colIdx) => (
+                {row.map((cell: string, colIdx: number) => (
                   hasHeader && rowIdx === 0 ? (
                     <th
                       key={colIdx}
