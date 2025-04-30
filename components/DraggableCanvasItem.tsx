@@ -926,7 +926,7 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
     return (
       <div
         ref={containerRef as any}
-        className={`absolute flex flex-col items-center justify-center border rounded bg-white ${isSelected ? 'border-blue-500 border-2' : 'border-gray-300'}`}
+        className={`absolute flex flex-col items-center justify-center border rounded ${isSelected ? 'border-blue-500 border-2' : 'border-gray-300'}`}
         style={{
           ...style,
           width: item.width || 120,
@@ -934,14 +934,16 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
           borderRadius: item.borderRadius ?? 8,
           boxShadow: item.boxShadow ?? '0 2px 8px rgba(0,0,0,0.08)',
           cursor: isLocked ? 'default' : 'move',
+          background: 'transparent',
         }}
         onClick={e => {
           e.stopPropagation();
           onSelect(item.id);
         }}
       >
-        <Tag style={{ width: 28, height: 28, color: '#2563eb', marginBottom: 4 }} />
-        <span style={{ fontSize: 16, color: '#222', fontFamily: 'inter', fontWeight: 500 }}>{item.content || 'Variable Field'}</span>
+        <span>
+          {`{${item.variableName || 'variable'}}`}
+        </span>
       </div>
     );
   }
