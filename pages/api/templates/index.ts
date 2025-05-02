@@ -71,8 +71,50 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } catch (error) {
       res.status(500).json({ success: false, error: 'Failed to delete template' });
     }
+  } else if (req.method === 'PUT') {
+    // Update a template by custom id or MongoDB _id
+    const { id } = req.query;
+    const { name, data, previewUrl } = req.body;
+    if (!id) {
+      return res.status(400).json({ success: false, error: 'Missing template ID' });
+    }
+    if (!name && !data && !previewUrl) {
+      return res.status(400).json({ success: false, error: 'No update data provided' });
+    }
+    try {
+      // Build update object
+      const update: any = {};
+      if (name !== undefined) update.name = name;
+      if (data !== undefined) update.data = data;
+      if (previewUrl !== undefined) update.previewUrl = previewUrl;
+
+      // Try to update by custom id field first
+      let updated = await Template.findOneAndUpdate(
+        { id },
+        { $set: update },
+        { new: true }
+      );
+      // If not found, try to update by MongoDB _id
+      if (!updated) {
+        try {
+          updated = await Template.findByIdAndUpdate(
+            id,
+            { $set: update },
+            { new: true }
+          );
+        } catch (e) {
+          // ignore invalid ObjectId errors
+        }
+      }
+      if (!updated) {
+        return res.status(404).json({ success: false, error: 'Template not found' });
+      }
+      res.status(200).json({ success: true, template: updated });
+    } catch (error) {
+      res.status(500).json({ success: false, error: 'Failed to update template' });
+    }
   } else {
-    res.setHeader('Allow', ['GET', 'POST', 'DELETE']);
+    res.setHeader('Allow', ['GET', 'POST', 'DELETE', 'PUT']);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 } 
