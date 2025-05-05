@@ -33,7 +33,6 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useDrag, useDrop, DragSourceMonitor, DropTargetMonitor, ConnectDragSource, ConnectDropTarget } from 'react-dnd'
 import DraggableCanvasItem from './DraggableCanvasItem'
 import { useDrag as useDndDrag } from 'react-dnd'
@@ -821,18 +820,7 @@ export default function PDFBuilderClient({ templateId }: { templateId?: string |
           <div className="w-80 border-r bg-background h-full flex flex-col">
             <div className="p-4 border-b flex justify-between items-center">
               <h2 className="font-medium text-sm">Properties</h2>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem>Copy Properties</DropdownMenuItem>
-                  <DropdownMenuItem>Paste Properties</DropdownMenuItem>
-                  <DropdownMenuItem>Reset to Default</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {/* Dropdown menu removed */}
             </div>
             <ScrollArea className="flex-1">
               <div className="p-4">
