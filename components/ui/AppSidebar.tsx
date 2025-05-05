@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 const menu = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, route: "/" },
   { key: "templates", label: "Templates", icon: FileText, route: "/templates" },
-  { key: "exports", label: "Exports", icon: Upload, route: "/exports" },
   { key: "settings", label: "Settings", icon: Settings, route: "/settings" },
 ];
 

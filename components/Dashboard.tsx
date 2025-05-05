@@ -242,13 +242,17 @@ export default function DashboardPage() {
               </TabsList>
             </Tabs>
           )}
-          {/* Header with search and actions */}
-          <div className="flex flex-col sm:flex-row gap-3 mb-8">
-            <div className="flex gap-2">
-              <Button>
-                <FilePlus className="mr-2 h-4 w-4" />
-                New Document
-              </Button>
+          {/* Header with search, notification, and create template */}
+          <div className="flex flex-col md:flex-row gap-4 mb-8 items-center">
+            <div className="relative flex-1 w-full md:w-auto">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search templates..."
+                className="pl-9"
+                // Optionally, add value/onChange if you want search to work
+              />
+            </div>
+            <div className="flex gap-2 items-center">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="icon">
@@ -310,6 +314,10 @@ export default function DashboardPage() {
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
+              <Button variant="default">
+                <Plus className="h-4 w-4 mr-2" />
+                Create Template
+              </Button>
             </div>
           </div>
 
@@ -482,16 +490,6 @@ export default function DashboardPage() {
                       </CardContent>
                     </Card>
                   ))}
-                  <Card className="overflow-hidden border-dashed flex flex-col items-center justify-center aspect-[3/4] bg-muted/50">
-                    <div className="p-6 text-center">
-                      <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                        <Plus className="h-6 w-6 text-primary" />
-                      </div>
-                      <h3 className="font-medium mb-2">Create New Document</h3>
-                      <p className="text-sm text-muted-foreground mb-4">Start from scratch or use a template</p>
-                      <Button>Create Document</Button>
-                    </div>
-                  </Card>
                 </div>
               </div>
 
