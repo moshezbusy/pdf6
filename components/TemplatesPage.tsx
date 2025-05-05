@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import DashboardSidebar from "@/components/ui/DashboardSidebar";
+import Link from "next/link";
 
 // Template type
 interface Template {
@@ -154,23 +155,6 @@ export default function TemplatesPage({ onEdit }: { onEdit?: (templateId: string
           </div>
         </div>
 
-        {/* Category Pills */}
-        <ScrollArea className="whitespace-nowrap pb-4 mb-6">
-          <div className="flex gap-2">
-            {categories.map((category) => (
-              <Button
-                key={category}
-                variant={selectedCategory === category ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedCategory(category)}
-                className="rounded-full"
-              >
-                {category}
-              </Button>
-            ))}
-          </div>
-        </ScrollArea>
-
         {/* Templates Grid */}
         {loading ? (
           <div className="flex justify-center items-center py-10">Loading templates...</div>
@@ -280,23 +264,27 @@ function TemplateCard({ template, onPreview, onDelete, onEdit }: { template: Tem
           alt={template.title}
           className="w-full aspect-[1/1.414] object-cover"
         />
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 z-10">
-          <Button size="sm" variant="secondary" onClick={onPreview}>
-            <Eye className="h-4 w-4 mr-1" />
-            Preview
-          </Button>
-          <Button size="sm" variant="secondary">
-            <Download className="h-4 w-4 mr-1" />
-            Use
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => onEdit?.(template.id)}>
-            <Pencil className="h-4 w-4 mr-1" />
-            Edit
-          </Button>
-          <Button size="sm" variant="destructive" onClick={onDelete}>
-            <Trash2 className="h-4 w-4 mr-1" />
-            Delete
-          </Button>
+        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
+          <div className="grid grid-cols-2 p-2 bg-transparent grid-rows-[minmax(2.25rem,auto)_minmax(2.25rem,auto)] gap-x-4 gap-y-3" style={{ width: 224 }}>
+            <Button size="sm" variant="secondary" className="w-24 h-9">
+              <Eye className="h-4 w-4 mr-1" />
+              Preview
+            </Button>
+            <Button size="sm" variant="secondary" className="w-24 h-9">
+              <Download className="h-4 w-4 mr-1" />
+              Use
+            </Button>
+            <Link href={`/editor?id=${template.id}`} className="w-full h-full">
+              <Button size="sm" variant="outline" className="w-24 h-9">
+                <Pencil className="h-4 w-4 mr-1" />
+                Edit
+              </Button>
+            </Link>
+            <Button size="sm" variant="destructive" onClick={onDelete} className="w-24 h-9">
+              <Trash2 className="h-4 w-4 mr-1" />
+              Trash
+            </Button>
+          </div>
         </div>
         {template.featured && (
           <div className="absolute top-2 left-2">
