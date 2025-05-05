@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react";
-import { LayoutTemplate, Search, Filter, Star, Clock, Tag, Eye, Download, Plus, ChevronDown, Trash2 } from 'lucide-react';
+import { LayoutTemplate, Search, Filter, Star, Clock, Tag, Eye, Download, Plus, ChevronDown, Trash2, Pencil } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,12 +19,11 @@ interface Template {
   recent: boolean;
   tags: string[];
   previewUrl: string;
-  thumbnailUrl: string;
 }
 
 const categories = ["All", "Invoice", "Report", "Certificate", "Letter", "Proposal", "Resume", "Contract", "Brochure"];
 
-export default function TemplatesPage() {
+export default function TemplatesPage({ onEdit }: { onEdit?: (templateId: string) => void } = {}) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
@@ -40,7 +39,7 @@ export default function TemplatesPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/templates");
+      const res = await fetch("/api/templates?includePreview=true");
       const data = await res.json();
       if (data.success && Array.isArray(data.templates)) {
         // Map API data to Template type
@@ -52,8 +51,7 @@ export default function TemplatesPage() {
           featured: !!t.data?.featured,
           recent: !!t.data?.recent,
           tags: Array.isArray(t.data?.tags) ? t.data.tags : [],
-          previewUrl: t.previewUrl || "/placeholder.svg?height=842&width=595",
-          thumbnailUrl: t.previewUrl || "/placeholder.svg?height=400&width=300",
+          previewUrl: t.previewUrl || "/placeholder.svg?height=400&width=300",
         }));
         setTemplates(mapped);
       } else {
@@ -194,6 +192,7 @@ export default function TemplatesPage() {
               template={template}
               onPreview={() => setSelectedTemplate(template)}
               onDelete={() => handleDeleteTemplate(template)}
+              onEdit={onEdit}
             />
           ))}
         </div>
@@ -276,7 +275,7 @@ export default function TemplatesPage() {
   );
 }
 
-function TemplateCard({ template, onPreview, onDelete }: { template: Template; onPreview: () => void; onDelete: () => void }) {
+function TemplateCard({ template, onPreview, onDelete, onEdit }: { template: Template; onPreview: () => void; onDelete: () => void; onEdit?: (templateId: string) => void }) {
   return (
     <div className="border rounded-md overflow-hidden hover:border-primary transition-colors group relative">
       <div className="relative">
@@ -284,7 +283,7 @@ function TemplateCard({ template, onPreview, onDelete }: { template: Template; o
           [ {template.id} ]
         </span>
         <img
-          src={template.thumbnailUrl || "/placeholder.svg"}
+          src={template.previewUrl || "/placeholder.svg?height=400&width=300"}
           alt={template.title}
           className="w-full aspect-[1/1.414] object-cover"
         />
@@ -296,6 +295,10 @@ function TemplateCard({ template, onPreview, onDelete }: { template: Template; o
           <Button size="sm" variant="secondary">
             <Download className="h-4 w-4 mr-1" />
             Use
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => onEdit?.(template.id)}>
+            <Pencil className="h-4 w-4 mr-1" />
+            Edit
           </Button>
           <Button size="sm" variant="destructive" onClick={onDelete}>
             <Trash2 className="h-4 w-4 mr-1" />
