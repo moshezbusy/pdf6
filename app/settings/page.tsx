@@ -12,6 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import DashboardSidebar from "@/components/ui/DashboardSidebar";
 
 export default function SettingsPage() {
   const isMobile = useIsMobile();
@@ -29,32 +30,15 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="container py-8">
-      <div className="flex items-center gap-2 mb-6">
-        <Sliders className="h-6 w-6" />
-        <h1 className="text-2xl font-bold">Settings</h1>
-      </div>
-
-      <div className="flex flex-col md:flex-row gap-8">
-        {/* Settings Navigation */}
-        {!isMobile && (
-          <div className="md:w-64 shrink-0">
-            <div className="space-y-1">
-              {settingsTabs.map((tab) => (
-                <Button
-                  key={tab.id}
-                  variant={activeTab === tab.id ? "secondary" : "ghost"}
-                  className="w-full justify-start"
-                  onClick={() => setActiveTab(tab.id)}
-                >
-                  {tab.icon}
-                  {tab.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-        )}
-
+    <div className="flex flex-col md:flex-row h-full min-h-screen">
+      <DashboardSidebar
+        headline="Settings"
+        icon={<Sliders className="h-6 w-6" />}
+        tabs={settingsTabs}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+      />
+      <div className="flex-1 px-4 py-8">
         {/* Settings Content */}
         <div className="flex-1">
           {isMobile && (

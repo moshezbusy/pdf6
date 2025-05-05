@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import DashboardSidebar from "@/components/ui/DashboardSidebar";
 
 // Template type
 interface Template {
@@ -33,6 +34,12 @@ export default function TemplatesPage({ onEdit }: { onEdit?: (templateId: string
   const [error, setError] = useState<string | null>(null);
   const [templateToDelete, setTemplateToDelete] = useState<Template | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const sidebarTabs = [
+    { id: "all", label: "All Templates", icon: <LayoutTemplate className="h-4 w-4 mr-2" /> },
+    { id: "favorites", label: "Favorites", icon: <Star className="h-4 w-4 mr-2" /> },
+    { id: "recent", label: "Recently Used", icon: <Clock className="h-4 w-4 mr-2" /> },
+  ];
 
   // Fetch templates from API
   const fetchTemplates = useCallback(async () => {
@@ -114,163 +121,149 @@ export default function TemplatesPage({ onEdit }: { onEdit?: (templateId: string
   };
 
   return (
-    <div className="w-full px-8 py-8">
-      <div className="flex items-center gap-2 mb-6">
-        <LayoutTemplate className="h-6 w-6" />
-        <h1 className="text-2xl font-bold">Templates</h1>
-      </div>
-
-      {/* Search and Filter Bar */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search templates..."
-            className="pl-9"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            <span>Filter</span>
-            <ChevronDown className="h-4 w-4 ml-1" />
-          </Button>
-          <Button variant="default">
-            <Plus className="h-4 w-4 mr-2" />
-            Create Template
-          </Button>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <Tabs defaultValue="all" className="mb-6" onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="all" className="flex items-center gap-2">
-            <LayoutTemplate className="h-4 w-4" />
-            All Templates
-          </TabsTrigger>
-          <TabsTrigger value="featured" className="flex items-center gap-2">
-            <Star className="h-4 w-4" />
-            Featured
-          </TabsTrigger>
-          <TabsTrigger value="recent" className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            Recently Used
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
-
-      {/* Category Pills */}
-      <ScrollArea className="whitespace-nowrap pb-4 mb-6">
-        <div className="flex gap-2">
-          {categories.map((category) => (
-            <Button
-              key={category}
-              variant={selectedCategory === category ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedCategory(category)}
-              className="rounded-full"
-            >
-              {category}
-            </Button>
-          ))}
-        </div>
-      </ScrollArea>
-
-      {/* Templates Grid */}
-      {loading ? (
-        <div className="flex justify-center items-center py-10">Loading templates...</div>
-      ) : error ? (
-        <div className="flex justify-center items-center py-10 text-red-500">{error}</div>
-      ) : filteredTemplates.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {filteredTemplates.map((template) => (
-            <TemplateCard
-              key={template.id}
-              template={template}
-              onPreview={() => setSelectedTemplate(template)}
-              onDelete={() => handleDeleteTemplate(template)}
-              onEdit={onEdit}
+    <div className="flex flex-col md:flex-row h-full min-h-screen">
+      <DashboardSidebar
+        headline="Templates"
+        icon={<LayoutTemplate className="h-6 w-6" />}
+        tabs={sidebarTabs}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+      />
+      <div className="flex-1 px-4 py-8">
+        {/* Search and Filter Bar */}
+        <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search templates..."
+              className="pl-9"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
-          ))}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex items-center gap-2">
+              <Filter className="h-4 w-4" />
+              <span>Filter</span>
+              <ChevronDown className="h-4 w-4 ml-1" />
+            </Button>
+            <Button variant="default">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Template
+            </Button>
+          </div>
         </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-md p-10">
-          <p className="text-muted-foreground mb-2">No templates found matching your criteria</p>
-          <Button
-            onClick={() => {
-              setSearchQuery("");
-              setSelectedCategory("All");
-              setActiveTab("all");
-            }}
-          >
-            Clear Filters
-          </Button>
-        </div>
-      )}
 
-      {/* Template Preview Dialog */}
-      {selectedTemplate && (
-        <Dialog open={!!selectedTemplate} onOpenChange={(open) => !open && setSelectedTemplate(null)}>
-          <DialogContent className="max-w-4xl">
-            <DialogHeader>
-              <DialogTitle>{selectedTemplate.title}</DialogTitle>
-            </DialogHeader>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="md:col-span-2">
-                <div className="border rounded-md overflow-hidden">
-                  <img
-                    src={selectedTemplate.previewUrl || "/placeholder.svg"}
-                    alt={selectedTemplate.title}
-                    className="w-full h-auto object-cover"
-                  />
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-medium mb-1">Description</h3>
-                  <p className="text-sm text-muted-foreground">{selectedTemplate.description}</p>
-                </div>
-                <div>
-                  <h3 className="font-medium mb-1">Category</h3>
-                  <Badge variant="outline">{selectedTemplate.category}</Badge>
-                </div>
-                <div>
-                  <h3 className="font-medium mb-1">Tags</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedTemplate.tags.map((tag: string) => (
-                      <Badge key={tag} variant="secondary">
-                        {tag}
-                      </Badge>
-                    ))}
+        {/* Category Pills */}
+        <ScrollArea className="whitespace-nowrap pb-4 mb-6">
+          <div className="flex gap-2">
+            {categories.map((category) => (
+              <Button
+                key={category}
+                variant={selectedCategory === category ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedCategory(category)}
+                className="rounded-full"
+              >
+                {category}
+              </Button>
+            ))}
+          </div>
+        </ScrollArea>
+
+        {/* Templates Grid */}
+        {loading ? (
+          <div className="flex justify-center items-center py-10">Loading templates...</div>
+        ) : error ? (
+          <div className="flex justify-center items-center py-10 text-red-500">{error}</div>
+        ) : filteredTemplates.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {filteredTemplates.map((template) => (
+              <TemplateCard
+                key={template.id}
+                template={template}
+                onPreview={() => setSelectedTemplate(template)}
+                onDelete={() => handleDeleteTemplate(template)}
+                onEdit={onEdit}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-md p-10">
+            <p className="text-muted-foreground mb-2">No templates found matching your criteria</p>
+            <Button
+              onClick={() => {
+                setSearchQuery("");
+                setSelectedCategory("All");
+                setActiveTab("all");
+              }}
+            >
+              Clear Filters
+            </Button>
+          </div>
+        )}
+
+        {/* Template Preview Dialog */}
+        {selectedTemplate && (
+          <Dialog open={!!selectedTemplate} onOpenChange={(open) => !open && setSelectedTemplate(null)}>
+            <DialogContent className="max-w-4xl">
+              <DialogHeader>
+                <DialogTitle>{selectedTemplate.title}</DialogTitle>
+              </DialogHeader>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-2">
+                  <div className="border rounded-md overflow-hidden">
+                    <img
+                      src={selectedTemplate.previewUrl || "/placeholder.svg"}
+                      alt={selectedTemplate.title}
+                      className="w-full h-auto object-cover"
+                    />
                   </div>
                 </div>
-                <div className="pt-4">
-                  <Button className="w-full">Use This Template</Button>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-medium mb-1">Description</h3>
+                    <p className="text-sm text-muted-foreground">{selectedTemplate.description}</p>
+                  </div>
+                  <div>
+                    <h3 className="font-medium mb-1">Category</h3>
+                    <Badge variant="outline">{selectedTemplate.category}</Badge>
+                  </div>
+                  <div>
+                    <h3 className="font-medium mb-1">Tags</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedTemplate.tags.map((tag: string) => (
+                        <Badge key={tag} variant="secondary">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="pt-4">
+                    <Button className="w-full">Use This Template</Button>
+                  </div>
                 </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={!!templateToDelete} onOpenChange={(open) => !open && setTemplateToDelete(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Delete Template</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p>Are you sure you want to delete the template <span className="font-semibold">{templateToDelete?.title}</span>? This action cannot be undone.</p>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setTemplateToDelete(null)} disabled={deleting}>Cancel</Button>
+                <Button variant="destructive" onClick={confirmDeleteTemplate} disabled={deleting}>{deleting ? 'Deleting...' : 'Delete'}</Button>
               </div>
             </div>
           </DialogContent>
         </Dialog>
-      )}
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={!!templateToDelete} onOpenChange={(open) => !open && setTemplateToDelete(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Delete Template</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p>Are you sure you want to delete the template <span className="font-semibold">{templateToDelete?.title}</span>? This action cannot be undone.</p>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setTemplateToDelete(null)} disabled={deleting}>Cancel</Button>
-              <Button variant="destructive" onClick={confirmDeleteTemplate} disabled={deleting}>{deleting ? 'Deleting...' : 'Delete'}</Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      </div>
     </div>
   );
 }
