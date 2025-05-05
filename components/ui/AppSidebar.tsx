@@ -3,13 +3,13 @@ import { LayoutDashboard, FileText, Upload, Settings, Square } from "lucide-reac
 import { cn } from "@/lib/utils";
 
 const menu = [
-  { key: "editor", label: "Editor", icon: LayoutDashboard },
-  { key: "templates", label: "Templates", icon: FileText },
-  { key: "exports", label: "Exports", icon: Upload },
+  { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { key: "templates", label: "Templates", icon: Upload },
+  { key: "exports", label: "Exports", icon: Settings },
   { key: "settings", label: "Settings", icon: Settings },
 ];
 
-export default function AppSidebar({ active = "editor", onSelect }: { active?: string; onSelect?: (key: string) => void }) {
+export default function AppSidebar({ active = "dashboard", onSelect }: { active?: string; onSelect?: (key: string) => void }) {
   return (
     <aside
       className="flex flex-col items-center bg-background border-r h-screen w-14 py-4 shadow-sm z-20"

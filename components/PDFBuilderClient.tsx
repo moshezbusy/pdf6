@@ -38,7 +38,7 @@ import { useDrag, useDrop, DragSourceMonitor, DropTargetMonitor, ConnectDragSour
 import DraggableCanvasItem from './DraggableCanvasItem'
 import { useDrag as useDndDrag } from 'react-dnd'
 import ColorPickerWithHex from "@/components/ui/ColorPickerWithHex"
-import type { CanvasItem, GridCell } from '../../types/CanvasItem'
+import type { CanvasItem, GridCell } from '@/types/CanvasItem'
 import SignaturePad from "./SignaturePad";
 import React from "react";
 import TemplatesPage from "@/components/TemplatesPage";
@@ -66,7 +66,7 @@ function calculateTableHeight(rowHeaderHeight: number, rowHeight: number, numRow
   return rowHeaderHeight + (Math.max(numRows - 1, 0) * rowHeight);
 }
 
-export default function PDFBuilderClient() {
+export default function PDFBuilderClient({ templateId }: { templateId?: string | null }) {
   const [selectedBlock, setSelectedBlock] = useState<string | null>("text")
   const [canvasItems, setCanvasItems] = useState<CanvasItem[]>([])
   const [isOverCanvas, setIsOverCanvas] = useState(false)
@@ -80,6 +80,8 @@ export default function PDFBuilderClient() {
   const [saveStatus, setSaveStatus] = useState('idle');
   const [templateName, setTemplateName] = useState("");
   const [settingsTab, setSettingsTab] = useState('style');
+  const [loadingTemplate, setLoadingTemplate] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Get the selected item from canvasItems
   const selectedItem = selectedItemId ? canvasItems.find(item => item.id === selectedItemId) : null;
@@ -671,6 +673,36 @@ export default function PDFBuilderClient() {
       setSettingsTab('style');
     }
   }, [selectedItemId, canvasItems]);
+
+  useEffect(() => {
+    if (!templateId) {
+      setTemplateName("");
+      setCanvasItems([]);
+      setFetchError(null);
+      return;
+    }
+    setLoadingTemplate(true);
+    setFetchError(null);
+    fetch(`/api/templates?id=${encodeURIComponent(templateId)}`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Failed to fetch template");
+        const data = await res.json();
+        if (data?.template) {
+          setTemplateName(data.template.name || "Untitled Template");
+          setCanvasItems(Array.isArray(data.template.data?.canvasItems) ? data.template.data.canvasItems : []);
+        } else {
+          setTemplateName("");
+          setCanvasItems([]);
+          setFetchError("Template not found");
+        }
+      })
+      .catch((err) => {
+        setTemplateName("");
+        setCanvasItems([]);
+        setFetchError(err.message || "Error fetching template");
+      })
+      .finally(() => setLoadingTemplate(false));
+  }, [templateId]);
 
   return (
     <div className="flex h-screen w-full bg-background">
