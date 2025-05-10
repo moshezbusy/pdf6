@@ -30,7 +30,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/pdf-builder/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu"
 import { useIsMobile } from "@/components/ui/use-mobile"
 import DashboardSidebar from "@/components/ui/DashboardSidebar"
 
@@ -314,9 +314,11 @@ export default function DashboardPage() {
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button variant="default">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Template
+              <Button variant="default" asChild>
+                <Link href="/editor">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Template
+                </Link>
               </Button>
             </div>
           </div>

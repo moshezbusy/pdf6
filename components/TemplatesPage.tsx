@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ScrollArea } from "@/components/ui/scroll-area";
 import DashboardSidebar from "@/components/ui/DashboardSidebar";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 // Template type
 interface Template {
@@ -35,6 +36,7 @@ export default function TemplatesPage({ onEdit }: { onEdit?: (templateId: string
   const [error, setError] = useState<string | null>(null);
   const [templateToDelete, setTemplateToDelete] = useState<Template | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const router = useRouter();
 
   const sidebarTabs = [
     { id: "all", label: "All Templates", icon: <LayoutTemplate className="h-4 w-4 mr-2" /> },
@@ -121,6 +123,20 @@ export default function TemplatesPage({ onEdit }: { onEdit?: (templateId: string
     }
   };
 
+  const handleCreateTemplate = async () => {
+    try {
+      const res = await fetch("/api/templates/create", { method: "POST" });
+      const data = await res.json();
+      if (data.success && data.template && data.template.id) {
+        router.push(`/editor?id=${data.template.id}`);
+      } else {
+        alert("Failed to create template");
+      }
+    } catch (err) {
+      alert("Failed to create template");
+    }
+  };
+
   return (
     <div className="flex flex-col md:flex-row h-full min-h-screen">
       <DashboardSidebar
@@ -148,7 +164,7 @@ export default function TemplatesPage({ onEdit }: { onEdit?: (templateId: string
               <span>Filter</span>
               <ChevronDown className="h-4 w-4 ml-1" />
             </Button>
-            <Button variant="default">
+            <Button variant="default" onClick={handleCreateTemplate}>
               <Plus className="h-4 w-4 mr-2" />
               Create Template
             </Button>
