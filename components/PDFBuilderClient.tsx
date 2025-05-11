@@ -652,12 +652,22 @@ export default function PDFBuilderClient({ template }: { template: any }) {
       // 2. Prepare template data
       const name = templateName.trim() || "Untitled Template";
       const data = { canvasItems };
-      // 3. POST to API
-      const res = await fetch("/api/templates", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, data, previewUrl }),
-      });
+      let res;
+      if (template && template.id) {
+        // Update existing template
+        res = await fetch(`/api/templates?id=${encodeURIComponent(template.id)}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, data, previewUrl }),
+        });
+      } else {
+        // Create new template
+        res = await fetch("/api/templates", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, data, previewUrl }),
+        });
+      }
       if (res.ok) {
         setSaveStatus('saved');
         setTimeout(() => setSaveStatus('idle'), 2000);
