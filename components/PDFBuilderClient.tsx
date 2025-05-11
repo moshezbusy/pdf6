@@ -65,7 +65,7 @@ function calculateTableHeight(rowHeaderHeight: number, rowHeight: number, numRow
   return rowHeaderHeight + (Math.max(numRows - 1, 0) * rowHeight);
 }
 
-export default function PDFBuilderClient({ templateId }: { templateId?: string | null }) {
+export default function PDFBuilderClient({ template }: { template: any }) {
   const [selectedBlock, setSelectedBlock] = useState<string | null>("text")
   const [canvasItems, setCanvasItems] = useState<CanvasItem[]>([])
   const [isOverCanvas, setIsOverCanvas] = useState(false)
@@ -81,6 +81,14 @@ export default function PDFBuilderClient({ templateId }: { templateId?: string |
   const [settingsTab, setSettingsTab] = useState('style');
   const [loadingTemplate, setLoadingTemplate] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+
+  // Initialize state from template prop
+  useEffect(() => {
+    if (template) {
+      setTemplateName(template.name || "Untitled Template");
+      setCanvasItems(template.data?.canvasItems || []);
+    }
+  }, [template]);
 
   // Get the selected item from canvasItems
   const selectedItem = selectedItemId ? canvasItems.find(item => item.id === selectedItemId) : null;
@@ -674,7 +682,7 @@ export default function PDFBuilderClient({ templateId }: { templateId?: string |
   }, [selectedItemId, canvasItems]);
 
   useEffect(() => {
-    if (!templateId) {
+    if (!template) {
       setTemplateName("");
       setCanvasItems([]);
       setFetchError(null);
@@ -682,7 +690,7 @@ export default function PDFBuilderClient({ templateId }: { templateId?: string |
     }
     setLoadingTemplate(true);
     setFetchError(null);
-    fetch(`/api/templates?id=${encodeURIComponent(templateId)}`)
+    fetch(`/api/templates?id=${encodeURIComponent(template.id)}`)
       .then(async (res) => {
         if (!res.ok) throw new Error("Failed to fetch template");
         const data = await res.json();
@@ -701,7 +709,7 @@ export default function PDFBuilderClient({ templateId }: { templateId?: string |
         setFetchError(err.message || "Error fetching template");
       })
       .finally(() => setLoadingTemplate(false));
-  }, [templateId]);
+  }, [template]);
 
   return (
     <div className="flex h-screen w-full bg-background">
