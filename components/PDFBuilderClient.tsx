@@ -24,6 +24,9 @@ import {
   Move,
   GripHorizontal,
   Tag,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -369,7 +372,8 @@ export default function PDFBuilderClient({ template }: { template: any }) {
             color: '#000000',
             isBold: true,
             isItalic: false,
-            isUnderline: false
+            isUnderline: false,
+            textAlign: 'left',
           };
         } else if (item.type === 'heading2') {
           newItem = {
@@ -385,7 +389,8 @@ export default function PDFBuilderClient({ template }: { template: any }) {
             color: '#000000',
             isBold: true,
             isItalic: false,
-            isUnderline: false
+            isUnderline: false,
+            textAlign: 'left',
           };
         } else if (item.type === 'image') {
           newItem = {
@@ -603,7 +608,8 @@ export default function PDFBuilderClient({ template }: { template: any }) {
             color: '#000000',
             isBold: false,
             isItalic: false,
-            isUnderline: false
+            isUnderline: false,
+            textAlign: 'left',
           };
         }
         setCanvasItems((items) => [
@@ -634,7 +640,8 @@ export default function PDFBuilderClient({ template }: { template: any }) {
       fontWeight: item.isBold ? 'bold' : (item.fontWeight ? fontWeightMap[item.fontWeight] : 400),
       fontStyle: item.isItalic ? 'italic' : 'normal',
       textDecoration: item.isUnderline ? 'underline' : 'none',
-      color: item.color
+      color: item.color,
+      textAlign: item.textAlign || 'left',
     };
   };
 
@@ -1039,29 +1046,81 @@ export default function PDFBuilderClient({ template }: { template: any }) {
                               />
                             </div>
                           </div>
-                          <div className="flex items-center justify-between">
-                            <Label htmlFor="text-bold">Bold</Label>
-                            <Switch 
-                              id="text-bold" 
-                              checked={selectedItem.isBold ?? false}
-                              onCheckedChange={(checked) => updateSelectedItem({ isBold: checked })}
-                            />
+                          <div className="space-y-2">
+                            <Label>Text Style</Label>
+                            <div className="flex gap-2">
+                              <Button
+                                variant={selectedItem.isBold ? 'default' : 'outline'}
+                                size="icon"
+                                aria-label="Bold"
+                                onClick={() => {
+                                  if (selectedItem.isBold) {
+                                    updateSelectedItem({ isBold: false, isItalic: false, isUnderline: false });
+                                  } else {
+                                    updateSelectedItem({ isBold: true, isItalic: false, isUnderline: false });
+                                  }
+                                }}
+                              >
+                                <span style={{ fontWeight: 'bold', fontSize: 20, fontFamily: 'inherit' }}>B</span>
+                              </Button>
+                              <Button
+                                variant={selectedItem.isItalic ? 'default' : 'outline'}
+                                size="icon"
+                                aria-label="Italic"
+                                onClick={() => {
+                                  if (selectedItem.isItalic) {
+                                    updateSelectedItem({ isBold: false, isItalic: false, isUnderline: false });
+                                  } else {
+                                    updateSelectedItem({ isBold: false, isItalic: true, isUnderline: false });
+                                  }
+                                }}
+                              >
+                                <span style={{ fontStyle: 'italic', fontSize: 20, fontFamily: 'inherit' }}>I</span>
+                              </Button>
+                              <Button
+                                variant={selectedItem.isUnderline ? 'default' : 'outline'}
+                                size="icon"
+                                aria-label="Underline"
+                                onClick={() => {
+                                  if (selectedItem.isUnderline) {
+                                    updateSelectedItem({ isBold: false, isItalic: false, isUnderline: false });
+                                  } else {
+                                    updateSelectedItem({ isBold: false, isItalic: false, isUnderline: true });
+                                  }
+                                }}
+                              >
+                                <span style={{ textDecoration: 'underline', fontSize: 20, fontFamily: 'inherit' }}>U</span>
+                              </Button>
+                            </div>
                           </div>
-                          <div className="flex items-center justify-between">
-                            <Label htmlFor="text-italic">Italic</Label>
-                            <Switch 
-                              id="text-italic" 
-                              checked={selectedItem.isItalic ?? false}
-                              onCheckedChange={(checked) => updateSelectedItem({ isItalic: checked })}
-                            />
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <Label htmlFor="text-underline">Underline</Label>
-                            <Switch 
-                              id="text-underline" 
-                              checked={selectedItem.isUnderline ?? false}
-                              onCheckedChange={(checked) => updateSelectedItem({ isUnderline: checked })}
-                            />
+                          <div className="space-y-2">
+                            <Label>Alignment</Label>
+                            <div className="flex gap-2">
+                              <Button
+                                variant={selectedItem.textAlign === 'left' ? 'default' : 'outline'}
+                                size="icon"
+                                aria-label="Align Left"
+                                onClick={() => updateSelectedItem({ textAlign: selectedItem.textAlign === 'left' ? undefined : 'left' })}
+                              >
+                                <AlignLeft className="h-6 w-6" />
+                              </Button>
+                              <Button
+                                variant={selectedItem.textAlign === 'center' ? 'default' : 'outline'}
+                                size="icon"
+                                aria-label="Align Center"
+                                onClick={() => updateSelectedItem({ textAlign: selectedItem.textAlign === 'center' ? undefined : 'center' })}
+                              >
+                                <AlignCenter className="h-6 w-6" />
+                              </Button>
+                              <Button
+                                variant={selectedItem.textAlign === 'right' ? 'default' : 'outline'}
+                                size="icon"
+                                aria-label="Align Right"
+                                onClick={() => updateSelectedItem({ textAlign: selectedItem.textAlign === 'right' ? undefined : 'right' })}
+                              >
+                                <AlignRight className="h-6 w-6" />
+                              </Button>
+                            </div>
                           </div>
                         </>
                       ) : selectedItem && (selectedItem.type === "rectangle" || selectedItem.type === "circle") ? (
