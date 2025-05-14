@@ -33,6 +33,7 @@ interface DraggableCanvasItemProps {
   onResizeImage?: (id: string, newWidth: number, newHeight: number) => void;
   onEditTableCell?: (row: number, col: number, value: string) => void;
   onDelete?: (id: string) => void;
+  onEditText?: (id: string, newText: string) => void;
 }
 
 // Helper to convert hex color and opacity to rgba
@@ -59,6 +60,7 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
   onResizeImage,
   onEditTableCell,
   onDelete,
+  onEditText,
 }) => {
   const { x, y } = gridToPixel(item.gridPosition);
   const textRef = React.useRef<HTMLDivElement>(null);
@@ -76,7 +78,16 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
 
   // Measure text size and update colSpan/rowSpan if needed
   React.useEffect(() => {
-    if (textRef.current) {
+    if (textRef.current && (item.type === 'text' || item.type === 'heading1' || item.type === 'heading2')) {
+      // Cap width at 600px
+      const rect = textRef.current.getBoundingClientRect();
+      const cappedWidth = Math.min(rect.width, 600);
+      const newColSpan = Math.ceil(cappedWidth / GRID_CELL_SIZE);
+      const newRowSpan = Math.ceil(rect.height / GRID_CELL_SIZE);
+      if (newColSpan !== item.colSpan || newRowSpan !== item.rowSpan) {
+        onResize(item.id, newColSpan, newRowSpan);
+      }
+    } else if (textRef.current) {
       const rect = textRef.current.getBoundingClientRect();
       const newColSpan = Math.ceil(rect.width / GRID_CELL_SIZE);
       const newRowSpan = Math.ceil(rect.height / GRID_CELL_SIZE);
@@ -111,6 +122,36 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
 
   // Only attach dragRef if not locked
   const containerRef = isLocked ? undefined : dragRef;
+
+  // Helper for trash icon
+  const TrashButton = isSelected && onDelete && !isLocked ? (
+    <button
+      type="button"
+      style={{
+        position: 'absolute',
+        left: -28,
+        top: '50%',
+        transform: 'translateY(-50%)',
+        zIndex: 20,
+        background: 'rgba(255,255,255,0.85)',
+        border: 'none',
+        borderRadius: 4,
+        padding: 2,
+        boxShadow: '0 1px 4px rgba(0,0,0,0.10)',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+      aria-label="Delete Element"
+      onClick={e => {
+        e.stopPropagation();
+        onDelete(item.id);
+      }}
+    >
+      <Trash style={{ width: 16, height: 16, color: '#e11d48' }} />
+    </button>
+  ) : null;
 
   // Render the correct tag for the item type
   if (item.type === 'image') {
@@ -172,6 +213,7 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
           onSelect(item.id);
         }}
       >
+        {TrashButton}
         {item.src ? (
           <img
             src={item.src}
@@ -289,6 +331,7 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
           onSelect(item.id);
         }}
       >
+        {TrashButton}
         <div
           style={{
             width: '100%',
@@ -383,6 +426,7 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
           onSelect(item.id);
         }}
       >
+        {TrashButton}
         <div
           style={{
             width: '100%',
@@ -472,6 +516,7 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
         }}
         onClick={handleClick}
       >
+        {TrashButton}
         <button
           style={{
             width: '100%',
@@ -547,6 +592,7 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
           onSelect(item.id);
         }}
       >
+        {TrashButton}
         <ListTag style={{ margin: 0, paddingLeft: 24, listStyleType: isNumbered ? 'decimal' : 'disc' }}>
           {item.items && item.items.map((li: string, idx: number) => (
             <li key={idx} style={{ marginBottom: 4 }}>{li}</li>
@@ -580,6 +626,7 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
           onSelect(item.id);
         }}
       >
+        {TrashButton}
         <table 
           style={{ 
             borderCollapse: 'collapse', 
@@ -615,7 +662,6 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
                           contentEditable
                           suppressContentEditableWarning
                           onBlur={e => onEditTableCell && onEditTableCell(rowIdx, colIdx, e.currentTarget.textContent || '')}
-                          onKeyDown={e => { if (e.key === 'Enter') e.preventDefault(); }}
                           style={{ outline: 'none', minWidth: 40, textAlign: 'center', fontWeight: 600, background: 'transparent', height: '100%' }}
                         >
                           {cell}
@@ -643,7 +689,6 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
                           contentEditable
                           suppressContentEditableWarning
                           onBlur={e => onEditTableCell && onEditTableCell(rowIdx, colIdx, e.currentTarget.textContent || '')}
-                          onKeyDown={e => { if (e.key === 'Enter') e.preventDefault(); }}
                           style={{ outline: 'none', minWidth: 40, textAlign: 'center', background: 'transparent', height: '100%' }}
                         >
                           {cell}
@@ -684,6 +729,7 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
         }}
         title={qrValue}
       >
+        {TrashButton}
         {/* Simple QR code placeholder SVG */}
         <svg width={qrSize} height={qrSize} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect x="4" y="4" width="12" height="12" rx="2" fill={qrColor}/>
@@ -718,6 +764,7 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
           onSelect(item.id);
         }}
       >
+        {TrashButton}
         <svg
           width="90%"
           height="60%"
@@ -805,6 +852,7 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
           onSelect(item.id);
         }}
       >
+        {TrashButton}
         {chartSVG}
         <span className="text-xs text-gray-400 mt-1 absolute bottom-2 left-1/2 -translate-x-1/2">Chart</span>
       </div>
@@ -958,50 +1006,39 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
     <div
       ref={containerRef as any}
       className={`absolute bg-transparent border rounded flex items-center justify-center ${isLocked ? '' : 'cursor-move'} ${isSelected ? 'border-blue-500 border-2' : 'border-gray-300'}`}
-      style={style}
+      style={{
+        ...style,
+        width: 'fit-content',
+        maxWidth: 600,
+      }}
       onClick={(e) => {
         e.stopPropagation();
         onSelect(item.id);
       }}
     >
-      {/* Trash icon for text/heading elements when selected */}
-      {isSelected && onDelete && (item.type === 'text' || item.type === 'heading1' || item.type === 'heading2') && (
-        <button
-          type="button"
-          style={{
-            position: 'absolute',
-            top: 2,
-            right: 2,
-            zIndex: 20,
-            background: 'rgba(255,255,255,0.85)',
-            border: 'none',
-            borderRadius: 4,
-            padding: 2,
-            boxShadow: '0 1px 4px rgba(0,0,0,0.10)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-          aria-label="Delete Element"
-          onClick={e => {
-            e.stopPropagation();
-            onDelete(item.id);
-          }}
-        >
-          <Trash style={{ width: 16, height: 16, color: '#e11d48' }} />
-        </button>
-      )}
+      {TrashButton}
       <ContentTag
         ref={textRef}
+        contentEditable={isSelected && !isLocked}
+        suppressContentEditableWarning
+        spellCheck={false}
         style={{
           width: 'fit-content',
           height: 'fit-content',
-          pointerEvents: 'none',
           paddingTop: item.padding?.top ?? 0,
           paddingRight: item.padding?.right ?? 0,
           paddingBottom: item.padding?.bottom ?? 0,
           paddingLeft: item.padding?.left ?? 0,
+          whiteSpace: 'pre-line',
+          maxWidth: 600,
+          outline: 'none',
+          cursor: isSelected && !isLocked ? 'text' : 'default',
+          pointerEvents: isSelected && !isLocked ? 'auto' : 'none',
+        }}
+        onBlur={e => {
+          if (isSelected && !isLocked && typeof onEditText === 'function') {
+            onEditText(item.id, e.currentTarget.innerText || '');
+          }
         }}
       >
         {item.content}
