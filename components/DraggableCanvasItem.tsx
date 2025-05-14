@@ -1,6 +1,6 @@
 import React from 'react';
 import { useDrag } from 'react-dnd';
-import { GripHorizontal, Tag } from 'lucide-react';
+import { GripHorizontal, Tag, Trash } from 'lucide-react';
 import type { CanvasItem, GridCell } from '../types/CanvasItem';
 import {
   MousePointerClick,
@@ -32,6 +32,7 @@ interface DraggableCanvasItemProps {
   onResize: (id: string, newColSpan: number, newRowSpan: number) => void;
   onResizeImage?: (id: string, newWidth: number, newHeight: number) => void;
   onEditTableCell?: (row: number, col: number, value: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 // Helper to convert hex color and opacity to rgba
@@ -57,6 +58,7 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
   onResize,
   onResizeImage,
   onEditTableCell,
+  onDelete,
 }) => {
   const { x, y } = gridToPixel(item.gridPosition);
   const textRef = React.useRef<HTMLDivElement>(null);
@@ -962,6 +964,34 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
         onSelect(item.id);
       }}
     >
+      {/* Trash icon for text/heading elements when selected */}
+      {isSelected && onDelete && (item.type === 'text' || item.type === 'heading1' || item.type === 'heading2') && (
+        <button
+          type="button"
+          style={{
+            position: 'absolute',
+            top: 2,
+            right: 2,
+            zIndex: 20,
+            background: 'rgba(255,255,255,0.85)',
+            border: 'none',
+            borderRadius: 4,
+            padding: 2,
+            boxShadow: '0 1px 4px rgba(0,0,0,0.10)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          aria-label="Delete Element"
+          onClick={e => {
+            e.stopPropagation();
+            onDelete(item.id);
+          }}
+        >
+          <Trash style={{ width: 16, height: 16, color: '#e11d48' }} />
+        </button>
+      )}
       <ContentTag
         ref={textRef}
         style={{

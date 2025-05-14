@@ -2386,6 +2386,10 @@ export default function PDFBuilderClient({ template }: { template: any }) {
                     GRID_CELL_SIZE={GRID_CELL_SIZE}
                     onResize={handleResizeItem}
                     onResizeImage={handleResizeImage}
+                    onDelete={(item.type === 'text' || item.type === 'heading1' || item.type === 'heading2') ? ((id) => {
+                      setCanvasItems(items => items.filter(i => i.id !== id));
+                      setSelectedItemId(null);
+                    }) : undefined}
                   />
                 ))}
               </div>
