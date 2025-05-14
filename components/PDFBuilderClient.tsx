@@ -27,6 +27,7 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
+  Trash,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -727,6 +728,13 @@ export default function PDFBuilderClient({ template }: { template: any }) {
       })
       .finally(() => setLoadingTemplate(false));
   }, [template]);
+
+  // Handler to delete selected text element
+  const handleDeleteSelectedText = () => {
+    if (!selectedItemId) return;
+    setCanvasItems(items => items.filter(item => item.id !== selectedItemId));
+    setSelectedItemId(null);
+  };
 
   return (
     <div className="flex h-screen w-full bg-background">
@@ -2283,6 +2291,19 @@ export default function PDFBuilderClient({ template }: { template: any }) {
                     </TabsContent>
                   ) : null}
                 </Tabs>
+                {/* Trash button always at the very bottom for any selected element */}
+                {selectedItem && (
+                  <div className="flex justify-center pt-8">
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      aria-label="Delete Element"
+                      onClick={handleDeleteSelectedText}
+                    >
+                      <Trash className="h-5 w-5" />
+                    </Button>
+                  </div>
+                )}
               </div>
             </ScrollArea>
           </div>
