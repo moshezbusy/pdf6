@@ -901,6 +901,7 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
           onSelect(item.id);
         }}
       >
+        {TrashButton}
         {/* Background layer with opacity */}
         <div
           style={{
@@ -986,6 +987,7 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
           onSelect(item.id);
         }}
       >
+        {TrashButton}
         {item.url ? (
           <a href={item.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             {label}
@@ -1014,6 +1016,7 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
           onSelect(item.id);
         }}
       >
+        {TrashButton}
         <span>
           {`{${item.variableName || 'variable'}}`}
         </span>
