@@ -18,6 +18,8 @@ export type CanvasItem = {
   isBold?: boolean;
   isItalic?: boolean;
   isUnderline?: boolean;
+  // Text alignment for text-based elements
+  textAlign?: 'left' | 'center' | 'right';
   // Image-specific properties
   src?: string;
   // Rectangle-specific properties

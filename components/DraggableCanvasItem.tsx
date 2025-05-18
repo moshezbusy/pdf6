@@ -153,6 +153,32 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
     </button>
   ) : null;
 
+  // Helper for drag handle (mirrors TrashButton, but on the right)
+  const DragHandle = isSelected && !isLocked ? (
+    <div
+      style={{
+        position: 'absolute',
+        right: -28,
+        top: '50%',
+        transform: 'translateY(-50%)',
+        zIndex: 20,
+        background: 'rgba(59,130,246,0.10)',
+        border: 'none',
+        borderRadius: 4,
+        padding: 2,
+        boxShadow: '0 1px 4px rgba(59,130,246,0.10)',
+        cursor: 'grab',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#2563eb',
+      }}
+      aria-label="Drag Element"
+    >
+      <GripHorizontal style={{ width: 16, height: 16 }} />
+    </div>
+  ) : null;
+
   // Render the correct tag for the item type
   if (item.type === 'image') {
     // Helper for handle drag
@@ -214,6 +240,7 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
         }}
       >
         {TrashButton}
+        {DragHandle}
         {item.src ? (
           <img
             src={item.src}
@@ -265,9 +292,6 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
             onMouseDown={e => handleMouseDown(h.dir, e)}
           />
         ))}
-        <div className="absolute bottom-0 right-0 bg-blue-100 rounded-tl p-0.5 cursor-grab text-blue-600">
-          <GripHorizontal className="h-3 w-3" />
-        </div>
       </div>
     );
   }
@@ -332,6 +356,7 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
         }}
       >
         {TrashButton}
+        {DragHandle}
         <div
           style={{
             width: '100%',
@@ -360,9 +385,6 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
             onMouseDown={e => handleMouseDown(h.dir, e)}
           />
         ))}
-        <div className="absolute bottom-0 right-0 bg-blue-100 rounded-tl p-0.5 cursor-grab text-blue-600">
-          <GripHorizontal className="h-3 w-3" />
-        </div>
       </div>
     );
   }
@@ -427,6 +449,7 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
         }}
       >
         {TrashButton}
+        {DragHandle}
         <div
           style={{
             width: '100%',
@@ -455,9 +478,6 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
             onMouseDown={e => handleMouseDown(h.dir, e)}
           />
         ))}
-        <div className="absolute bottom-0 right-0 bg-blue-100 rounded-tl p-0.5 cursor-grab text-blue-600">
-          <GripHorizontal className="h-3 w-3" />
-        </div>
       </div>
     );
   }
@@ -517,6 +537,7 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
         onClick={handleClick}
       >
         {TrashButton}
+        {DragHandle}
         <button
           style={{
             width: '100%',
@@ -561,9 +582,6 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
           </span>
           {item.iconPosition === 'right' && icon}
         </button>
-        <div className="absolute bottom-0 right-0 bg-blue-100 rounded-tl p-0.5 cursor-grab text-blue-600">
-          <GripHorizontal className="h-3 w-3" />
-        </div>
       </div>
     );
   }
@@ -593,6 +611,7 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
         }}
       >
         {TrashButton}
+        {DragHandle}
         <ListTag style={{ margin: 0, paddingLeft: 24, listStyleType: isNumbered ? 'decimal' : 'disc' }}>
           {item.items && item.items.map((li: string, idx: number) => (
             <li key={idx} style={{ marginBottom: 4 }}>{li}</li>
@@ -627,6 +646,7 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
         }}
       >
         {TrashButton}
+        {DragHandle}
         <table 
           style={{ 
             borderCollapse: 'collapse', 
@@ -730,6 +750,7 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
         title={qrValue}
       >
         {TrashButton}
+        {DragHandle}
         {/* Simple QR code placeholder SVG */}
         <svg width={qrSize} height={qrSize} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect x="4" y="4" width="12" height="12" rx="2" fill={qrColor}/>
@@ -765,6 +786,7 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
         }}
       >
         {TrashButton}
+        {DragHandle}
         <svg
           width="90%"
           height="60%"
@@ -853,6 +875,7 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
         }}
       >
         {TrashButton}
+        {DragHandle}
         {chartSVG}
         <span className="text-xs text-gray-400 mt-1 absolute bottom-2 left-1/2 -translate-x-1/2">Chart</span>
       </div>
@@ -1017,6 +1040,7 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
       }}
     >
       {TrashButton}
+      {DragHandle}
       <ContentTag
         ref={textRef}
         contentEditable={isSelected && !isLocked}
@@ -1043,9 +1067,6 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
       >
         {item.content}
       </ContentTag>
-      <div className="absolute bottom-0 right-0 bg-blue-100 rounded-tl p-0.5 cursor-grab text-blue-600">
-        <GripHorizontal className="h-3 w-3" />
-      </div>
     </div>
   );
 };
