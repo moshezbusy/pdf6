@@ -76,7 +76,6 @@ export default function PDFBuilderClient({ template }: { template: any }) {
   const [gridOccupancy, setGridOccupancy] = useState<boolean[][]>(
     Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS).fill(false))
   )
-  const [dragPreview, setDragPreview] = useState<GridCell | null>(null)
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
   const [isDraggingCanvasItem, setIsDraggingCanvasItem] = useState(false)
   const [activeTab, setActiveTab] = useState("editor");
@@ -85,9 +84,10 @@ export default function PDFBuilderClient({ template }: { template: any }) {
   const [settingsTab, setSettingsTab] = useState('style');
   const [loadingTemplate, setLoadingTemplate] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [dragPreviewPixel, setDragPreviewPixel] = useState<{ x: number, y: number } | null>(null);
   // 1. Add state for alignment guides
   const [alignmentGuides, setAlignmentGuides] = useState<{ vertical: number | null, horizontal: number | null }>({ vertical: null, horizontal: null });
+  // Add state for drag preview box
+  const [previewBox, setPreviewBox] = useState<null | { x: number, y: number, width: number, height: number }>(null);
 
   // Initialize state from template prop
   useEffect(() => {
@@ -318,87 +318,22 @@ export default function PDFBuilderClient({ template }: { template: any }) {
       isOver: monitor.isOver(),
     }),
     hover: (item: any, monitor) => {
-      setIsOverCanvas(true)
-      const offset = monitor.getClientOffset()
-      const canvasRect = document.getElementById('pdf-canvas')?.getBoundingClientRect()
-      if (offset && canvasRect) {
-        let x = offset.x - canvasRect.left
-        let y = offset.y - canvasRect.top
-        let previewWidth = (elementSizes[selectedBlock as keyof typeof elementSizes]?.colSpan ?? 6) * GRID_CELL_SIZE;
-        let previewHeight = (elementSizes[selectedBlock as keyof typeof elementSizes]?.rowSpan ?? 2) * GRID_CELL_SIZE;
-        let draggedId = (window as any).__currentDragItemId;
-        let draggedItem = draggedId ? canvasItems.find(i => i.id === draggedId) : null;
-        if (draggedItem) {
-          if (typeof draggedItem.width === 'number') previewWidth = draggedItem.width;
-          if (typeof draggedItem.height === 'number') previewHeight = draggedItem.height;
-        }
-        // Calculate bounds for the dragged item (before snapping)
-        let dragBounds = {
-          left: x - ((window as any).__currentDragOffsetX || 0),
-          top: y - ((window as any).__currentDragOffsetY || 0),
-          right: (x - ((window as any).__currentDragOffsetX || 0)) + previewWidth,
-          bottom: (y - ((window as any).__currentDragOffsetY || 0)) + previewHeight,
-          centerX: (x - ((window as any).__currentDragOffsetX || 0)) + previewWidth / 2,
-          centerY: (y - ((window as any).__currentDragOffsetY || 0)) + previewHeight / 2,
-          width: previewWidth,
-          height: previewHeight,
-        };
-        // Compare to all other items
-        let vGuide: number | null = null;
-        let hGuide: number | null = null;
-        let snapX = dragBounds.left;
-        let snapY = dragBounds.top;
-        canvasItems.forEach(item2 => {
-          if (draggedId && item2.id === draggedId) return;
-          const b = getItemBounds(item2);
-          // Vertical guides (x positions)
-          [b.left, b.right, b.centerX].forEach(targetX => {
-            if (Math.abs(dragBounds.left - targetX) < SNAP_THRESHOLD) {
-              vGuide = targetX;
-              snapX = targetX;
-            }
-            if (Math.abs(dragBounds.right - targetX) < SNAP_THRESHOLD) {
-              vGuide = targetX;
-              snapX = targetX - dragBounds.width;
-            }
-            if (Math.abs(dragBounds.centerX - targetX) < SNAP_THRESHOLD) {
-              vGuide = targetX;
-              snapX = targetX - dragBounds.width / 2;
-            }
-          });
-          // Horizontal guides (y positions)
-          [b.top, b.bottom, b.centerY].forEach(targetY => {
-            if (Math.abs(dragBounds.top - targetY) < SNAP_THRESHOLD) {
-              hGuide = targetY;
-              snapY = targetY;
-            }
-            if (Math.abs(dragBounds.bottom - targetY) < SNAP_THRESHOLD) {
-              hGuide = targetY;
-              snapY = targetY - dragBounds.height;
-            }
-            if (Math.abs(dragBounds.centerY - targetY) < SNAP_THRESHOLD) {
-              hGuide = targetY;
-              snapY = targetY - dragBounds.height / 2;
-            }
-          });
-        });
-        setAlignmentGuides({ vertical: vGuide, horizontal: hGuide });
-        setDragPreviewPixel({ x: snapX, y: snapY }); // Snap preview to guide
-        // ... existing code for gridPos and dragPreview ...
-        const gridPos = pixelToGrid(snapX, snapY)
-        if (typeof setDragPreview === 'function') setDragPreview(gridPos);
-        // Store offset for preview
-        const isSidebarElement = !('offsetX' in item) || typeof item.offsetX !== 'number';
-        (window as any).__currentDragOffsetX = isSidebarElement ? 0 : item.offsetX;
-        (window as any).__currentDragOffsetY = isSidebarElement ? 0 : item.offsetY;
+      if (!monitor.isOver({ shallow: true })) {
+        setPreviewBox(null);
+        setIsOverCanvas(false);
+        return;
       }
-    },
-    drop: (item: any, monitor) => {
-      const offset = monitor.getClientOffset()
-      const canvasRect = document.getElementById('pdf-canvas')?.getBoundingClientRect()
-      if (!offset || !canvasRect) return
-      let x = offset.x - canvasRect.left
-      let y = offset.y - canvasRect.top
+      setIsOverCanvas(true);
+      // Use react-dnd's built-in offset for pixel-perfect preview
+      const sourceOffset = monitor.getSourceClientOffset && monitor.getSourceClientOffset();
+      const canvasRect = document.getElementById('pdf-canvas')?.getBoundingClientRect();
+      if (!sourceOffset || !canvasRect) {
+        setPreviewBox(null);
+        return;
+      }
+      let x = sourceOffset.x - canvasRect.left;
+      let y = sourceOffset.y - canvasRect.top;
+      // Determine preview size
       let previewWidth = (elementSizes[selectedBlock as keyof typeof elementSizes]?.colSpan ?? 6) * GRID_CELL_SIZE;
       let previewHeight = (elementSizes[selectedBlock as keyof typeof elementSizes]?.rowSpan ?? 2) * GRID_CELL_SIZE;
       let draggedId = (window as any).__currentDragItemId;
@@ -407,40 +342,41 @@ export default function PDFBuilderClient({ template }: { template: any }) {
         if (typeof draggedItem.width === 'number') previewWidth = draggedItem.width;
         if (typeof draggedItem.height === 'number') previewHeight = draggedItem.height;
       }
-      // Calculate bounds for the dragged item (before snapping)
-      let dragBounds = {
-        left: x - ((window as any).__currentDragOffsetX || 0),
-        top: y - ((window as any).__currentDragOffsetY || 0),
-        right: (x - ((window as any).__currentDragOffsetX || 0)) + previewWidth,
-        bottom: (y - ((window as any).__currentDragOffsetY || 0)) + previewHeight,
-        centerX: (x - ((window as any).__currentDragOffsetX || 0)) + previewWidth / 2,
-        centerY: (y - ((window as any).__currentDragOffsetY || 0)) + previewHeight / 2,
-        width: previewWidth,
-        height: previewHeight,
-      };
-      // Snap to guide if present
-      let snapX = dragBounds.left;
-      let snapY = dragBounds.top;
+      // Snap logic (same as drop)
+      let snapX = x;
+      let snapY = y;
       if (alignmentGuides.vertical !== null) {
-        // Snap left, right, or centerX
-        if (Math.abs(dragBounds.left - alignmentGuides.vertical) < SNAP_THRESHOLD) snapX = alignmentGuides.vertical;
-        if (Math.abs(dragBounds.right - alignmentGuides.vertical) < SNAP_THRESHOLD) snapX = alignmentGuides.vertical - dragBounds.width;
-        if (Math.abs(dragBounds.centerX - alignmentGuides.vertical) < SNAP_THRESHOLD) snapX = alignmentGuides.vertical - dragBounds.width / 2;
+        if (Math.abs(x - alignmentGuides.vertical) < SNAP_THRESHOLD) snapX = alignmentGuides.vertical;
       }
       if (alignmentGuides.horizontal !== null) {
-        // Snap top, bottom, or centerY
-        if (Math.abs(dragBounds.top - alignmentGuides.horizontal) < SNAP_THRESHOLD) snapY = alignmentGuides.horizontal;
-        if (Math.abs(dragBounds.bottom - alignmentGuides.horizontal) < SNAP_THRESHOLD) snapY = alignmentGuides.horizontal - dragBounds.height;
-        if (Math.abs(dragBounds.centerY - alignmentGuides.horizontal) < SNAP_THRESHOLD) snapY = alignmentGuides.horizontal - dragBounds.height / 2;
+        if (Math.abs(y - alignmentGuides.horizontal) < SNAP_THRESHOLD) snapY = alignmentGuides.horizontal;
       }
-      // Convert to grid position
-      const gridPos = pixelToGrid(snapX, snapY)
+      setPreviewBox({ x: snapX, y: snapY, width: previewWidth, height: previewHeight });
+    },
+    drop: (item: any, monitor) => {
+      // Use react-dnd's built-in offset for pixel-perfect drop
+      const sourceOffset = monitor.getSourceClientOffset && monitor.getSourceClientOffset();
+      const canvasRect = document.getElementById('pdf-canvas')?.getBoundingClientRect();
+      if (!sourceOffset || !canvasRect) return;
+      // Calculate the new top-left position relative to the canvas
+      const x = sourceOffset.x - canvasRect.left;
+      const y = sourceOffset.y - canvasRect.top;
+      // Snap logic (if any) can be applied here as before
+      let snapX = x;
+      let snapY = y;
+      // (Optional) Snap to alignment guides if present
+      if (alignmentGuides.vertical !== null) {
+        if (Math.abs(x - alignmentGuides.vertical) < SNAP_THRESHOLD) snapX = alignmentGuides.vertical;
+      }
+      if (alignmentGuides.horizontal !== null) {
+        if (Math.abs(y - alignmentGuides.horizontal) < SNAP_THRESHOLD) snapY = alignmentGuides.horizontal;
+      }
+      // Convert to grid position if needed
+      const gridPos = pixelToGrid(snapX, snapY);
       if (item.type === CANVAS_ITEM_TYPE) {
         // We're moving an existing item
-        const canvasItem = canvasItems.find(ci => ci.id === item.id)
+        const canvasItem = canvasItems.find(ci => ci.id === item.id);
         if (canvasItem) {
-          const offsetX = typeof item.offsetX === 'number' ? item.offsetX : 0;
-          const offsetY = typeof item.offsetY === 'number' ? item.offsetY : 0;
           setCanvasItems(items => items.map(i => i.id === canvasItem.id ? { ...i, pixelPosition: { x: snapX, y: snapY } } : i));
         }
       } else if ([
@@ -711,20 +647,19 @@ export default function PDFBuilderClient({ template }: { template: any }) {
           };
         }
         // After newItem is created, add pixelPosition using offset
-        // For new elements, offset is always 0
-        newItem.pixelPosition = { x, y };
+        // For new elements, use snapX/snapY to match preview position
+        newItem.pixelPosition = { x: snapX, y: snapY };
         setCanvasItems((items) => [
           ...items, 
           newItem
         ]);
         setSelectedItemId(id);
       }
-      setDragPreview(null);
+      setPreviewBox(null); // Hide preview after drop
       setIsOverCanvas(false);
       setIsDraggingCanvasItem(false);
-      setDragPreviewPixel(null); // <-- Reset pixel preview
       setAlignmentGuides({ vertical: null, horizontal: null }); // Clear guides after drop
-    }
+    },
   }) as [{ isOver: boolean }, ConnectDropTarget]
 
   // Calculate pixel position from grid position
@@ -2506,40 +2441,22 @@ export default function PDFBuilderClient({ template }: { template: any }) {
                     }}
                   />
                 ))}
-                {/* Placement preview (pixel-perfect, subtle gray) */}
-                {isOver && dragPreviewPixel && selectedBlock && (
-                  (() => {
-                    // Determine preview size
-                    let previewWidth = (elementSizes[selectedBlock as keyof typeof elementSizes]?.colSpan ?? 6) * GRID_CELL_SIZE;
-                    let previewHeight = (elementSizes[selectedBlock as keyof typeof elementSizes]?.rowSpan ?? 2) * GRID_CELL_SIZE;
-                    // If moving an existing item, use its actual width/height if available
-                    if (typeof (window as any).__currentDragItemId === 'string') {
-                      const draggedItem = canvasItems.find(i => i.id === (window as any).__currentDragItemId);
-                      if (draggedItem) {
-                        if (typeof draggedItem.width === 'number') previewWidth = draggedItem.width;
-                        if (typeof draggedItem.height === 'number') previewHeight = draggedItem.height;
-                        // For text/heading, use grid size if no custom width/height
-                        if ((draggedItem.type === 'text' || draggedItem.type === 'heading1' || draggedItem.type === 'heading2') && (!draggedItem.width || !draggedItem.height)) {
-                          previewWidth = (draggedItem.colSpan ?? 6) * GRID_CELL_SIZE;
-                          previewHeight = (draggedItem.rowSpan ?? 2) * GRID_CELL_SIZE;
-                        }
-                      }
-                    }
-                    return (
-                      <div
-                        className="absolute pointer-events-none"
-                        style={{
-                          left: dragPreviewPixel.x - ((window as any).__currentDragOffsetX || 0),
-                          top: dragPreviewPixel.y - ((window as any).__currentDragOffsetY || 0),
-                          width: previewWidth,
-                          height: previewHeight,
-                          border: '2px dashed #888',
-                          background: 'rgba(200,200,200,0.15)',
-                          zIndex: 1000,
-                        }}
-                      />
-                    );
-                  })()
+                {/* Shadow preview box for drop location */}
+                {previewBox && (
+                  <div
+                    className="absolute pointer-events-none"
+                    style={{
+                      left: previewBox.x,
+                      top: previewBox.y,
+                      width: previewBox.width,
+                      height: previewBox.height,
+                      border: '2px dashed #2563eb',
+                      background: 'rgba(37,99,235,0.08)',
+                      boxShadow: '0 4px 16px 0 rgba(37,99,235,0.15)',
+                      borderRadius: 8,
+                      zIndex: 1000,
+                    }}
+                  />
                 )}
                 {/* Alignment Guides */}
                 {alignmentGuides.vertical !== null && (

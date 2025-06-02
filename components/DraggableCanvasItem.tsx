@@ -62,18 +62,29 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
   onDelete,
   onEditText,
 }) => {
-  const { x, y } = gridToPixel(item.gridPosition);
+  // Use pixelPosition if available, otherwise fall back to grid
+  const left = item.pixelPosition?.x ?? gridToPixel(item.gridPosition).x;
+  const top = item.pixelPosition?.y ?? gridToPixel(item.gridPosition).y;
+
   const textRef = React.useRef<HTMLDivElement>(null);
   const [{ isDragging }, dragRef] = useDrag(() => ({
     type: 'CANVAS_ITEM',
-    item: {
-      type: 'CANVAS_ITEM',
-      id: item.id,
-      initialGridPosition: item.gridPosition,
+    item: () => {
+      // No need to calculate offsetX/offsetY; drop handler uses react-dnd's built-in offset
+      (window as any).__currentDragItemId = item.id;
+      return {
+        type: 'CANVAS_ITEM',
+        id: item.id,
+        initialGridPosition: item.gridPosition,
+      };
     },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
+    end: () => {
+      // Clean up after drag ends
+      (window as any).__currentDragItemId = undefined;
+    },
   }), [item.id, JSON.stringify(item.gridPosition)]);
 
   // Measure text size and update colSpan/rowSpan if needed
@@ -104,8 +115,8 @@ const DraggableCanvasItem: React.FC<DraggableCanvasItemProps> = ({
 
   // Compose style
   const style: React.CSSProperties = {
-    left: x,
-    top: y,
+    left,
+    top,
     width: item.width === undefined ? item.colSpan * GRID_CELL_SIZE : (item.width === 'auto' ? 'auto' : item.width),
     height: item.height === undefined ? item.rowSpan * GRID_CELL_SIZE : (item.height === 'auto' ? 'auto' : item.height),
     opacity: isDragging ? 0.5 : 1,
