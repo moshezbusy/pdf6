@@ -28,6 +28,7 @@ import {
   AlignCenter,
   AlignRight,
   Trash,
+  ChevronUp,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -296,9 +297,16 @@ export default function PDFBuilderClient({ template }: { template: any }) {
   // Add handler to update colSpan and rowSpan
   const handleResizeItem = (id: string, newColSpan: number, newRowSpan: number) => {
     setCanvasItems(items =>
-      items.map(item =>
-        item.id === id ? { ...item, colSpan: newColSpan, rowSpan: newRowSpan } : item
-      )
+      items.map(item => {
+        if (item.id === id) {
+          // For headings, clear width/height so bounding box is always based on colSpan/rowSpan
+          if (item.type === 'heading1' || item.type === 'heading2') {
+            return { ...item, colSpan: newColSpan, rowSpan: newRowSpan, width: undefined, height: undefined };
+          }
+          return { ...item, colSpan: newColSpan, rowSpan: newRowSpan };
+        }
+        return item;
+      })
     );
   };
 
@@ -1074,11 +1082,34 @@ export default function PDFBuilderClient({ template }: { template: any }) {
                               <Slider 
                                 value={[selectedItem.fontSize ?? 16]} 
                                 max={72} 
+                                min={8}
                                 step={1} 
                                 className="flex-1"
                                 onValueChange={(value) => updateSelectedItem({ fontSize: value[0] })}
                               />
                               <span className="text-sm w-8 text-center">{selectedItem.fontSize ?? 16}px</span>
+                              <div className="flex flex-col gap-0.5 ml-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-5 w-5 p-0"
+                                  aria-label="Increase font size"
+                                  onClick={() => updateSelectedItem({ fontSize: Math.min((selectedItem.fontSize ?? 16) + 1, 72) })}
+                                  tabIndex={-1}
+                                >
+                                  <ChevronUp className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-5 w-5 p-0"
+                                  aria-label="Decrease font size"
+                                  onClick={() => updateSelectedItem({ fontSize: Math.max((selectedItem.fontSize ?? 16) - 1, 8) })}
+                                  tabIndex={-1}
+                                >
+                                  <ChevronDown className="w-4 h-4" />
+                                </Button>
+                              </div>
                             </div>
                           </div>
                           <div className="space-y-2">
